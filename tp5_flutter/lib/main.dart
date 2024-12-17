@@ -48,6 +48,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
                   return ListTile(
                     title: Text(_movies[index].title),
                     subtitle: Text(_movies[index].annee),
+                    onTap: (){
+                      Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MovieDetailScreen(movie:_movies[index]))
+                      );
+                    },
                   );
                 },
               ),
@@ -75,6 +81,8 @@ class _MovieListScreenState extends State<MovieListScreen> {
       print(movies);
       print("rhefjcbherfnhelz");
 
+      print(movies);
+
       setState(() {
         _movies = movies.map((movie) => Movies.fromJson(movie)).toList();
       });
@@ -87,94 +95,117 @@ class _MovieListScreenState extends State<MovieListScreen> {
 class Movies {
   String title ="";
   String annee;
+  String imdbID;
 
-  Movies({required this.title, required this.annee});
+  Movies({required this.title, required this.annee, required this.imdbID});
 
   factory Movies.fromJson(Map<String, dynamic> json) {
     return Movies(
       title: json['Title'],
       annee: json['Year'],
+      imdbID: json['imdbID'],
     );
   }
 }
 
-/*class MovieDetailScreen extends StatefulWidget {
+class MovieDetailScreen extends StatefulWidget {
+  final Movies movie;
+  MovieDetailScreen({required this.movie});
+
   @override
   _MovieDetailScreenState createState() => _MovieDetailScreenState();
 }
 
-class _MovieDetailScreenState extends State<MovieDetailScreen> {
-  TextEditingController _searchController = TextEditingController();
-  List<Detail> _movies = [];
+  class _MovieDetailScreenState extends State<MovieDetailScreen> {
+    //TextEditingController _searchController = TextEditingController();
+    late Map<String, dynamic> _MovieDetail;
+    bool _isLoading = true;
+
+@override
+void initState(){
+  super.initState();
+  _getMovie('');
+}
   
   @override
     Widget build(BuildContext context) {
       return Scaffold(
         appBar: AppBar(
-          title: Text(widget.Movies.title ?? 'Details du film'),
+          title: Text(widget.movie.title ?? 'Details du film'),
         ),
         body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _MovieDetailScreen == null
-            ? Center(child: Text('Erreur de chargement'))
+          ? const Center(child: CircularProgressIndicator())
+          : _MovieDetail == null
+            ? const Center(child: Text('Erreur de chargement'))
             : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Titre: ${_MovieDetailScreen!['Title']}',
-                    style: TextStyle(
+                  Image.network("${_MovieDetail!['Poster']}"),
+                  Text('Titre: ${_MovieDetail!['Title']}',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold)
                   ),
-                  SizedBox(height: 10),
-                  Text('Année: ${_MovieDetailScreen!['Year']}'
-                  ),
+                  const SizedBox(height: 10),
+                  Text('Année: ${_MovieDetail!['Year']}'),
+                  Text('Genre: ${_MovieDetail!['Genre']}'),
+                  Text('Réalisateur: ${_MovieDetail!['Director']}'),
+                  Text('Description: ${_MovieDetail!['Plot']}'),
                 ],
               ),
             ),
           );
         }
 
-    Future<void> _searchMovies(String query) async {
+    Future<void> _getMovie(String query) async {
     const apiKey = 'a1a7e3e1';
-    final apiUrl = 'http://www.omdbapi.com/?apikey=$apiKey&s=$query';
+    final apiUrl = 'http://www.omdbapi.com/?apikey=$apiKey&i=${widget.movie.imdbID}';
 
     final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
+      setState(() {
+        _MovieDetail = json.decode(response.body);
+        _isLoading = false;
+      });
       final Map<String, dynamic> data = json.decode(response.body);
-
-      print(data);
-      final List<dynamic> movies = data['Search'];
-
-
-      print("rhefjcbherfnhelz");
-      print(movies);
-      print("rhefjcbherfnhelz");
+      //print(data);
 
       setState(() {
-        _movies = movies.map((movie) => Movies.fromJson(movie)).toList();
+        _isLoading = false;
+      });
+    }else {
+      throw Exception('False to load Movies');
+    }
+    }
+  }
+
+      /*setState(() {
+        _movies = movies.map((movie) => Movies.fromJson(movie)).cast<Detail>().toList();
       });
     } else {
       throw Exception('Failed to load movies');
     }
   }
-}
+}*/
 
-  class Detail {
+class Detail {
     String title ="";
     late String annee;
-    String poster;
-}
+    late String poster;
+    late String imdbID;
 
-Movies({required this.title, required this.annee, , required this.description});
 
-  factory Movies.fromJson(Map<String, dynamic> json) {
-    return Movies(
+Detail({required this.title, required this.annee, required this.imdbID, required this.poster});
+
+  factory Detail.fromJson(Map<String, dynamic> json) {
+    return Detail(
       title: json['Title'],
       annee: json['Year'],
-      affiche: json['poster']
+      imdbID: json['imdbID'],
+      poster: json['poster'],
     );
   }
-}*/
+}
